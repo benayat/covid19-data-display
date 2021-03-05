@@ -1,0 +1,15 @@
+:root{
+  box-sizing: border-box;
+
+}
+
+.continents{
+  display:block;
+  width: 30vw;
+  height: 10vh;
+}
+.chooseData{
+  display: block;
+  width:max-content;
+  height:max-content;
+}
