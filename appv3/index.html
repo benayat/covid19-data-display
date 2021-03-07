@@ -12,7 +12,7 @@
   <body>
     <div class="allSelectContainer">
       <div class="buttons">
-        <select class="continents">
+        <select class="select continents">
           <option value="choose continent" selected="selected">
             Choose a continent:
           </option>
@@ -22,7 +22,7 @@
           <option value="Americas">Americas</option>
           <option value="world">Entire world</option>
         </select>
-        <select class="chooseData">
+        <select class="select chooseData">
           <option value="choose statistic" selected="selected">
             please choose a statistic to view:
           </option>
@@ -35,7 +35,7 @@
         </select>
       </div>
       <div class="countriesSelect">
-        <select name="countries" id="countries">
+        <select name="countries" class="select" id="countries">
           <option value="please choose a country:" selected="selected">
             Please choose a country:
           </option>
@@ -43,15 +43,30 @@
       </div>
     </div>
     <div class="imgDiv">
-      <img src="./img/001-virus.png" alt="covid" class="rightImg" />
-      <img src="./img/002-virus.png" alt="covid" class="leftImg" />
+      <img src="./img/001-coronavirus.png" alt="covid" class="rightImg" />
+      <img src="./img/002-bacteria.png" alt="covid" class="leftImg" />
     </div>
     <div class="chartAndFlag">
       <div class="chartContainer">
-        <canvas id="myChart"> </canvas>
+        <canvas id="myChart"></canvas>
+      </div>
+      <div class="chartContainer">
+        <canvas id="myChart"></canvas>
+      </div>
+      <div class="chartContainer">
+        <canvas id="myChart"></canvas>
+      </div>
+      <div class="chartContainer">
+        <canvas id="myChart"></canvas>
+      </div>
+      <div class="chartContainer">
+        <canvas id="myChart"></canvas>
+      </div>
+      <div class="chartContainer">
+        <canvas id="myChart"></canvas>
       </div>
       <div class="flag"></div>
     </div>
-    <script src="appv2.js"></script>
+    <script src="appv3.js"></script>
   </body>
 </html>

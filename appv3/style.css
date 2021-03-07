@@ -19,7 +19,7 @@ body{
 .chartContainer{
   position: relative;
   width: 100%;
-  max-height: auto;
+  height: auto;
 }
 .containerResize{ 
   width: 50vw;
@@ -48,8 +48,6 @@ body{
 }
 
 .imgDiv{
-  position: relative;
-  top: 15vh;
   display:flex;
   align-items: center;
   justify-content: center;
@@ -74,8 +72,4 @@ body{
 }
 @keyframes rotateRight{
   100% { -webkit-transform: rotate(-360deg); transform:rotate(-360deg);  } 
-}
-
-.invisible{
-  display:none;
 }

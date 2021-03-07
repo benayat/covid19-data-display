@@ -34,34 +34,73 @@ async function fetchData() {
         number_of_critical_condition: element.latest_data.critical,
         new_cases: element.today.confirmed,
         new_deaths: element.today.deaths,
-        total_recovered: element.recovered,
+        total_recovered: element.latest_data.recovered,
       };
     })
     .filter((x) => x.region !== '');
   return covidCountriesArray;
 }
-function setHandlers(data) {
+function setMainHandlers(data) {
   const continentButton = document.querySelector('.continents');
   const chooseData = document.querySelector('.chooseData');
-  chooseData.addEventListener('change', () => updateChartHandler(data));
-  continentButton.addEventListener('change', () => updateChartHandler(data));
+
+  const updatedHandler = updateChartHandler.bind(null, data);
+  chooseData.addEventListener('change', updatedHandler);
+
+  continentButton.addEventListener('change', updatedHandler);
 }
-function updateChartHandler(data) {
-  const continentButton = document.querySelector('.continents');
-  const chooseData = document.querySelector('.chooseData');
-  if (typeof chart !== 'undefined') {
-    // chart.clear();
+
+/* 
+I had a problem - I wanted to take the data from the chart to the right select(country list), 
+but as soon as a change detected, the chart data would change, so I just had to implement a "wait" function,
+so when we take the data from the chart, it will still be there.
+
+* I wonder if I should limit the wait just for the continent select, or leave it at that. 
+*/
+function wait(delayTime) {
+  return new Promise((resolve) => setTimeout(resolve, delayTime));
+}
+/* 
+I tried all different methods of updating the chart instead of destroying and rebuilding. none worked. even the API's destroy function leaves traces of the previous chart, so when I hovered over the new chart, old data appeared. when I used the clear function, rebuilding the chart failed.  this is the only solution I came up with - assigning null after destroying the chart.
+*/
+
+function destroyChart() {
+  if (typeof chart !== 'undefined' && chart != null) {
     chart.destroy();
     chart = null;
+    document.querySelector('.imgDiv').classList.remove('invisible');
   }
-  data =
+}
+
+function updateChartHandler(data, event = null) {
+  const continentButton = document.querySelector('.continents');
+  const chooseData = document.querySelector('.chooseData');
+  let dataConcrete = _.cloneDeep(data);
+  document.querySelector('.chartContainer').classList.remove('containerResize');
+  if (continentButton.value === 'choose continent') {
+    onContinentChange(null);
+    document
+      .querySelector('.chartContainer')
+      .classList.remove('containerResize');
+    return;
+  }
+
+  dataConcrete =
     continentButton.value === 'world'
-      ? data
-      : data.filter((x) => x.region === continentButton.value);
+      ? dataConcrete
+      : dataConcrete.filter((x) => x.region === continentButton.value);
+  if (event && event.target === continentButton) {
+    onContinentChange(dataConcrete);
+  }
+  destroyChart();
+  if (chooseData.value === 'choose statistic') return;
+  document.querySelector('.imgDiv').classList.add('invisible');
+
   return (chart = makeChart(
-    data.map((x) => x.name),
+    'bar',
+    dataConcrete.map((x) => x.name),
     chooseData.value,
-    data.map(
+    dataConcrete.map(
       (x) =>
         x[
           chooseData.value
@@ -73,17 +112,17 @@ function updateChartHandler(data) {
     `${chooseData.value} - ${continentButton.value}`
   ));
 }
-function makeChart(xLabels, yLabel, chartData, displayText) {
+function makeChart(type, xLabels, yLabel, chartData, displayText) {
   const chartElement = document.querySelector('#myChart').getContext('2d');
   let chart = new Chart(chartElement, {
-    type: 'bar',
+    type: type,
     data: {
       labels: xLabels,
       datasets: [
         {
           label: yLabel,
           data: chartData,
-          backgroundColor: 'rgb(255, 99, 132)',
+          backgroundColor: 'rgb(232, 134, 14)',
           borderWidth: 1,
           borderColor: '#777',
           hoverBorderWidth: 3,
@@ -95,13 +134,16 @@ function makeChart(xLabels, yLabel, chartData, displayText) {
       title: {
         display: true,
         text: displayText,
-        fonstSize: 24,
+        fontStyle: 'bold',
+        fontColor: '#000000',
+        fontSize: 30,
+        lineHeight: 2,
       },
       legend: {
         display: true,
         position: 'right',
         labels: {
-          fontColor: '#000',
+          fontColor: '#000000',
         },
       },
       layout: {
@@ -121,11 +163,76 @@ function makeChart(xLabels, yLabel, chartData, displayText) {
 }
 
 //part 2 - country stats cards:
-function onContinentChange(event) {}
+//note: even though just assignment operator is enough for shallow primitive array copy, (I checked!), I used the spread operator just to make it look better :)
+/* 
+note - the method I tried - I added a chache property to the chart, to save the data inside. this way I (hopefully) can take the data directly from the chart instead of just passing it as a parameter.
+*/
+/* 
+I used innerHtml to clean up the countrySelect - this way it will get read of the previous event listener as well.
 
+- if its the first visit - no event to remove
+*/
+//I was forced to use a global variable here to bind, since it looks like it's the only way to remove an event listener.
+function onContinentChange(data, firstTime = false) {
+  const countrySelect = document.getElementById('countries');
+  while (countrySelect.length > 1) countrySelect.remove(1);
+  if (document.querySelector('.continents').value === 'choose continent') {
+    destroyChart();
+    return;
+  }
+
+  const countriesData =
+    data.length > 70
+      ? data
+      : data.filter(
+          (x) => x.region === document.querySelector('.continents').value
+        );
+  if (typeof countriesDataBind === 'undefined')
+    window.countriesDataBind = newCountryChart.bind(null, countriesData);
+
+  if (!firstTime)
+    countrySelect.removeEventListener('change', countriesDataBind);
+  const allCountriesNames = countriesData.map((x) => x.name);
+  allCountriesNames.forEach((element) => {
+    countrySelect.insertAdjacentHTML(
+      'beforeend',
+      `<option class = 'country'>${element}</option>`
+    );
+  });
+  countrySelect.firstElementChild.selected = true;
+  window.countriesDataBind = newCountryChart.bind(null, countriesData);
+  countrySelect.addEventListener('change', countriesDataBind);
+}
+
+function newCountryChart(data, event) {
+  const country = data.find((x) => x.name === event.target.value);
+  if (event.target.value === 'please choose a country:') return;
+  destroyChart();
+  const countryData = [
+    { 'total cases': country.confirmed_cases },
+    { 'new cases': country.new_cases },
+    { 'total deaths': country.number_of_deaths },
+    { 'new deaths': country.new_deaths },
+    { 'total recovered': country.total_recovered },
+  ];
+  document.querySelector('.chartContainer').classList.add('containerResize');
+  const flagDiv = document.querySelector('.flag');
+  const flagsUrl = `https://www.countryflags.io/${country.code.toLowerCase()}/flat/64.png`;
+  flagDiv.style.background = `url(${flagsUrl}) center center/cover`;
+  document.querySelector('.imgDiv').classList.add('invisible');
+  window.chart = makeChart(
+    'horizontalBar',
+    countryData.map((x) => Object.keys(x)[0]),
+    country.name,
+    countryData.map((x) => Object.values(x)[0]),
+    `${country.name} covid-19 Statistics`
+  );
+}
 async function go() {
-  dataArray = await fetchData();
-  window.chart = updateChartHandler(dataArray);
-  setHandlers(dataArray);
+  const dataArray = await fetchData();
+  Object.freeze(dataArray);
+  window.chart = await updateChartHandler(dataArray);
+  onContinentChange(dataArray, 'true');
+  setMainHandlers(dataArray);
 }
 go();
