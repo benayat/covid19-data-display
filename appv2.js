@@ -230,7 +230,6 @@ function newCountryChart(data, event) {
 }
 async function go() {
   const dataArray = await fetchData();
-  Object.freeze(dataArray);
   window.chart = await updateChartHandler(dataArray);
   onContinentChange(dataArray, 'true');
   setMainHandlers(dataArray);
